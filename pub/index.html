@@ -4,10 +4,12 @@
 	<!-- Required meta tags -->
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
+	<link href="https://fonts.googleapis.com/css?family=Fredoka+One&display=swap" rel="stylesheet">
+	
 	<!-- Bootstrap CSS -->
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
+	<link rel="stylesheet" href="/style.css" >
+	
 	<script>
 	 function startTime() {
 	     var today = new Date();
@@ -16,8 +18,8 @@
 	     var s = today.getSeconds();
 	     m = checkTime(m);
 	     s = checkTime(s);
-	     document.getElementById('app').innerHTML =
-		 h + ":" + m + ":" + s;
+	     document.getElementById('clock').innerHTML =
+		 "<span id='clock' class='text-center'>" + h + ":" + m + ":" + s + "</span>";
 	     var t = setTimeout(startTime, 500);
 	 }
 	 function checkTime(i) {
@@ -30,14 +32,19 @@
     </head>
     <body onload="startTime()">
 
-	<div class="container">
+	<div class="container-fluid">
 	    <div class="row">
-		<div class="col"><h1 class="text-centered">SPA Clock!</h1></div>
+		<div class="col">
+		    <button onClick="window.location.reload()" class="btn btn-small btn-secondary rounded-circle">R</button>
+		</div>
+
+		<div class="col">
+		    <div id="clock" class="text-center mh-100"></div>
+		</div>
+		<div class="col"></div>
 	    </div>
-	    <div class="row">
-		<div id="app"></div>
-		<button class="btn btn-large btn-block">Click Me</button>
-	    </div>
+
+
 	</div>
 	
 	<!-- Optional JavaScript -->
