@@ -7,6 +7,9 @@ Panels.
 >It will actually run on pretty much any browser, but it is more fun
 >when it consumes a touch screen on a tiny computer! :)
 
+This is the first hack at creating something useful. We are going to call
+this version, branch the _Minimum Viable Clock_.
+
 ## Build and Use spaclock
 
 This is a single go file, with additional web files and hence can be
