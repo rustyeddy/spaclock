@@ -3,15 +3,13 @@ body {
     color: white;
 }
 
+.row {
+    margin-top: 80px;
+}
 
 .container-fluid {
     height: 100%;
 }
-
-.row {
-    margin: 120px 0;
-}
-
 
 #clock {
     font-family: 'Fredoka One', cursive;
