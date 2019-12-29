@@ -1,6 +1,6 @@
 body {
     background: #557a95;
-    : white;
+    color: white;
 }
 
 
@@ -9,7 +9,7 @@ body {
 }
 
 .row {
-    margin: 20px 0;
+    margin: 120px 0;
 }
 
 
