@@ -22,6 +22,12 @@ type spaHandler struct {
 	indexPath  string
 }
 
+type wsMessage struct {
+	Message string `json:"message"`
+	Clock   string `json:"clock"`
+	Date    string `json:"date"`
+}
+
 // upgrader is used by the HTTP socket to establish a websocket
 // connection with the client
 var (
@@ -75,16 +81,24 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	// ... Use conn to send a recieve messages: this basically turns
-	// into an echo server.
+	// into an echo server.  We need to spawn this process off.  But
+	// for now we'll just decode it and away we go.
 	for {
-		mtype, msg, err := conn.ReadMessage()
-		if err != nil {
-			log.Errorf("Websocket Read failed %v", err)
+
+		var err error
+		var msg wsMessage
+		if err = conn.ReadJSON(&msg); err != nil {
+			log.Errorf("ws ReadJSON failed %v", err)
 			return
 		}
-		log.Infof("ws recieved client %v %p", mtype, msg)
+		log.Infof("ws recieved message: %+v", msg)
 
-		if err := conn.WriteMessage(mtype, msg); err != nil {
+		msg = wsMessage{
+			Message: "Hello, there!",
+			Date:    "Today",
+		}
+
+		if err = conn.WriteJSON(msg); err != nil {
 			log.Errorf("Websocket Write failed %v", err)
 			return
 		}
@@ -94,8 +108,9 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 func main() {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/health", handleHealth)
 	router.HandleFunc("/ws", handleUpgrade)
+	router.HandleFunc("/api/health", handleHealth)
+	router.HandleFunc("/api/message", handleMessage)
 
 	spa := spaHandler{staticPath: "pub", indexPath: "index.html"}
 	router.PathPrefix("/").Handler(spa)
@@ -113,5 +128,17 @@ func main() {
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
 	// an example API handler
+	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
+func handleMessage(w http.ResponseWriter, r *http.Request) {
+
+	switch r.Method {
+	case "GET":
+
+	case "PUT", "POST":
+
+	default:
+	}
 	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 }

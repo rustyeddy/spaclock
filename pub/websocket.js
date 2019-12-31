@@ -1,20 +1,43 @@
 window.addEventListener("load", function(evt) {
-    var clock = document.getElementById("clock");
-    var ws = new WebSocket("ws://localhost:8000/ws");
+    var ws = new WebSocket("ws://" + document.location.host + "/ws");
 
     ws.onopen = function(evt) {
         console.log("OPEN");
-	ws.send("hello");
+	var sendmsg = {
+	    message: "hello",
+	};
+	ws.send(JSON.stringify(sendmsg));
     }
     
     ws.onclose = function(evt) {
-        console.log("CLOSE");
+        console.log("CLOSE"); 
         ws = null;
     }
     
     ws.onmessage = function(evt) {
-        console.log("RESPONSE: " + evt.data);
-	clock.textContent = evt.data;
+	var obj = JSON.parse(evt.data);
+	for (id in obj) {
+	    console.log(id + " - " + obj[id]);
+	    switch (id) {
+	    case "clock":
+		console.log("  .. skipping clock");
+		// Do not update clock
+		break;
+
+	    case "date":
+		// ignore date for now
+		console.log("  .. skipping date");
+		break;
+
+	    default:
+		console.log("error handling element " + id);
+		var ele = document.getElementById(id);
+		if (ele) {
+		    ele.innerHTML = obj[id];
+		}
+	    }
+
+	}
     }
     
     ws.onerror = function(evt) {
