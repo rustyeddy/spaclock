@@ -2,13 +2,15 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // spaHandler implements the http.Handler interface, so we can use it
@@ -19,6 +21,22 @@ type spaHandler struct {
 	staticPath string
 	indexPath  string
 }
+
+type wsMessage struct {
+	Message string `json:"message"`
+	Clock   string `json:"clock"`
+	Date    string `json:"date"`
+}
+
+// upgrader is used by the HTTP socket to establish a websocket
+// connection with the client
+var (
+	upgrader *websocket.Upgrader = &websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin:     func(r *http.Request) bool { return true },
+	}
+)
 
 // ServeHTTP inspects the URL path to locate a file within the static dir
 // on the SPA handler. If a file is found, it will be served. If not, the
@@ -54,13 +72,45 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.FileServer(http.Dir(h.staticPath)).ServeHTTP(w, r)
 }
 
+func handleUpgrade(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Errorf("Websocket Upgrade failed %v", err)
+		return
+	}
+	defer conn.Close()
+
+	// ... Use conn to send a recieve messages: this basically turns
+	// into an echo server.  We need to spawn this process off.  But
+	// for now we'll just decode it and away we go.
+	for {
+
+		var err error
+		var msg wsMessage
+		if err = conn.ReadJSON(&msg); err != nil {
+			log.Errorf("ws ReadJSON failed %v", err)
+			return
+		}
+		log.Infof("ws recieved message: %+v", msg)
+
+		msg = wsMessage{
+			Message: "Hello, there!",
+			Date:    "Today",
+		}
+
+		if err = conn.WriteJSON(msg); err != nil {
+			log.Errorf("Websocket Write failed %v", err)
+			return
+		}
+	}
+}
+
 func main() {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		// an example API handler
-		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
-	})
+	router.HandleFunc("/ws", handleUpgrade)
+	router.HandleFunc("/api/health", handleHealth)
+	router.HandleFunc("/api/message", handleMessage)
 
 	spa := spaHandler{staticPath: "pub", indexPath: "index.html"}
 	router.PathPrefix("/").Handler(spa)
@@ -74,4 +124,21 @@ func main() {
 	}
 
 	log.Fatal(srv.ListenAndServe())
+}
+
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	// an example API handler
+	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
+func handleMessage(w http.ResponseWriter, r *http.Request) {
+
+	switch r.Method {
+	case "GET":
+
+	case "PUT", "POST":
+
+	default:
+	}
+	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 }
