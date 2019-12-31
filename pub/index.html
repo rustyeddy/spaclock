@@ -10,40 +10,13 @@
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 	<link rel="stylesheet" href="/style.css" >
 	
-	<script src="/clock.js"></script>
-	<script src="/weather.js"></script>
+	<script src="/websocket.js"></script>
 
 	<title>Internet SPA Clock</title>
     </head>
     <body>
-	<table>
-	    <tr>
-		<td valign="top" width="50%">
-		    <p>Click "Open" to create a connection to the
-			server, "Send" to send a message to the server
-			and "Close" to close the connection.  You can
-			change the message and send multiple times.<p>
-
-		    <form>
-			<button id="open">Open</button>
-			<button id="close">Close</button>
-			<p>
-			    <input id="input" type="text" value="Hello world!">
-			    <button id="send">Send</button>
-		    </form>
-		</td>
-
-		<td valign="top" width="50%">
-		    <div id="output"></div>
-		</td>
-	    </tr>
-	</table>
-
-	<!-- 
 	<div class="container-fluid">
 	    <div class="row">
-		<div class="col"></div>
-		<div class="col"></div>
 		<div class="col"></div>
 	    </div>
 
@@ -55,15 +28,17 @@
 		<div class="col"></div>
 	    </div>
 	    <div class="row">
+
 		<div class="col-11">
 		    <div id="weather" class="text-center align-top"></div>
 		</div>
+
 		<div class="col">
 		    <button onClick="window.location.reload()" class="btn btn-small btn-secondary btn-black rounded-circle">R</button>
 		</div>
 	    </div>
 	</div>
-	-->
+
 	<!-- Optional JavaScript -->
 	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
 	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

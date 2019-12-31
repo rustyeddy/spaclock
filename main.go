@@ -28,6 +28,7 @@ var (
 	upgrader *websocket.Upgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin:     func(r *http.Request) bool { return true },
 	}
 )
 
@@ -66,11 +67,7 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleUpgrade(w http.ResponseWriter, r *http.Request) {
-
-	up := &websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool { return true },
-	}
-	conn, err := up.Upgrade(w, r, nil)
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Errorf("Websocket Upgrade failed %v", err)
 		return
@@ -85,7 +82,7 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 			log.Errorf("Websocket Read failed %v", err)
 			return
 		}
-		log.Debugf("ws recieved client %v %p", mtype, msg)
+		log.Infof("ws recieved client %v %p", mtype, msg)
 
 		if err := conn.WriteMessage(mtype, msg); err != nil {
 			log.Errorf("Websocket Write failed %v", err)
