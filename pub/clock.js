@@ -6,7 +6,9 @@ function startTime() {
     m = checkTime(m);
     s = checkTime(s);
     document.getElementById('clock').innerHTML =
-	"<span id='clock' class='text-center'>" + h + ":" + m + "</span>";
+	"<span id='clock' class='text-center'>" + h + ":" + m + "</span>" +
+	"<span id='seconds'>  " + s + "  </span>";
+    
     var t = setTimeout(startTime, 500);
 }
 

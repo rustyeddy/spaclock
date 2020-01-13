@@ -1,5 +1,5 @@
 body {
-    background: #557a95;
+    background: #523219;
     color: white;
 }
 
@@ -12,7 +12,11 @@ body {
 }
 
 #clock {
-    font-family: 'Fredoka One', cursive;
-    font-size: 92px;
+    font-family: 'Comfortaa', cursive;
+    font-size: 178px;
 }
 
+#seconds {
+    font-size: 18px;
+    font-style: italic;
+}
