@@ -80,6 +80,10 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	go wsLoop(conn)
+}
+
+func wsLoop(conn *websocket.Conn) {
 	// ... Use conn to send a recieve messages: this basically turns
 	// into an echo server.  We need to spawn this process off.  But
 	// for now we'll just decode it and away we go.
@@ -87,6 +91,7 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 
 		var err error
 		var msg wsMessage
+
 		if err = conn.ReadJSON(&msg); err != nil {
 			log.Errorf("ws ReadJSON failed %v", err)
 			return
@@ -94,7 +99,7 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 		log.Infof("ws recieved message: %+v", msg)
 
 		msg = wsMessage{
-			Message: "Hello, there!",
+			Message: "Monday, Jan. 13, 2020",
 			Date:    "Today",
 		}
 
