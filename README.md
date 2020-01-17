@@ -1,14 +1,31 @@
 # SPA Clock
 
-SPA Clock is a small Single Page Application (SPA) clock that runs
+SPA Clock is a small Single Page Application (SPA) iClock that runs
 well on a Raspberry Pi touch screen. Both the 2.8" and 6" Touch
 Panels. It will actually run on pretty much any browser, but it is
-more fun when it consumes a touch screen on a tiny computer! :)
+more fun when it consumes the full touch screen on a tiny computer! :) 
 
-This is the first hack at creating something useful. We are going to call
-this version, branch the _Minimum Viable Clock_.
+This is the first hack at creating something useful, we'll call it a
+_Minimum Viable Clock_. 
 
-## Build and Use spaclock
+## SPA Clock Features
+
+OK, spaClock is an Internet Clock meaning it is a clock connected to
+the Internet, giving the clock access to a tremendous amount of
+resources allow it to provide some really cool features like:
+
+- Self setting with the Internet and NTP!
+- Message section to send yourself all sorts of messages
+- Websockets for realtime updates, without refreshing!
+
+This simple clock connects to the internet getting its time from a
+public NTP server, so no need to reset the clock, ever again, even
+across changes for Daylight Savings! 
+
+Expect more cool stuff to come along.  Hmm. Need to make a plugin
+system??? :)
+
+## Building The spaClock
 
 This is a single go file, with additional web files and hence can be
 run in your favorite way go way.  To build and run just do:
@@ -21,22 +38,15 @@ To get help running the program use the -help / -h switch:
 
 Now point your browser at http://host-or-ip:8000/ and that is it! 
 
-## Building SPA Clock
+
+### SPA Clock Design
 
 SPAClock is a Single Page App (SPA) with the _backend written in go_.
 Since SPAClock is a SPA (uuuhhh) it derives the UI from HTML5/CSS and
 JavaScript. The _backend_ is a self contained server written in
-[go](http://golang.org). 
-
-## SPA Clock Features
-
-- Self setting with the Internet and NTP!
-- Message section to remind yourself of some stuff! Including have a
-  good time!
-- Websockets for realtime updates!
-
-This simple clock connects to the internet getting its time from a
-public NTP server, so no need to reset the clock, ever again! 
+[go](http://golang.org) ready to serve up static HTML, CSS &
+JavaScript, it also has a REST API and Sports a Websocket for real
+time communication.
 
 ## Developing SPAClock
 
@@ -75,3 +85,7 @@ the imagine for styling possibilities.
 
 ## Moving Forward
 
+- Alarms
+- Weather (weather.org)
+- MQTT to display sensor and other daya
+- Plugin system
