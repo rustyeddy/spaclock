@@ -1,5 +1,5 @@
 body {
-    background: #523219;
+    background: #433235;
     color: white;
 }
 
@@ -11,14 +11,16 @@ body {
     height: 100%;
 }
 
-#date {
+#clock {
     font-family: 'Comfortaa', cursive;
-    font-size: 178px;
+    font-size: 162px;
 }
 
-
+#date {
+    font-size: 68px;
+}
 
 .small {
-    font-size: 18px;
+    font-size: 28px;
     font-style: italic;
 }

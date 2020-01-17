@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,6 +14,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Configuration struct {
+	Addr string // Addr:port
+}
+
 type wsMessage struct {
 	Message string `json:"message"`
 }
@@ -20,16 +25,27 @@ type wsMessage struct {
 // upgrader is used by the HTTP socket to establish a websocket
 // connection with the client
 var (
-	upgrader *websocket.Upgrader = &websocket.Upgrader{
+	config Configuration
+	upgrader *websocket.Upgrader;
+	msgQ chan string
+	
+)
+
+func init() {
+	msgQ = make(chan string)
+	upgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin:     func(r *http.Request) bool { return true },
 	}
 
-	msgQ chan string = make(chan string)
-)
+	flag.StringVar(&config.Addr, "addr", "0.0.0.0:8000", "Address:port default is :8000")
+}
 
 func main() {
+	flag.Parse()
+
+	// Setup the router 
 	router := mux.NewRouter()
 
 	router.HandleFunc("/ws", handleUpgrade)
@@ -41,7 +57,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler: router,
-		Addr:    "0.0.0.0:8000",
+		Addr:    config.Addr,
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,

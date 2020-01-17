@@ -14,21 +14,13 @@ window.addEventListener("load", function(evt) {
         ws = null;
     }
     
+    // We assume the incoming message is a JSON string containing a single
+    // field 'message' with a string as a value.
     ws.onmessage = function(evt) {
 	var obj = JSON.parse(evt.data);
 	for (id in obj) {
 	    console.log(id + " - " + obj[id]);
 	    switch (id) {
-	    case "clock":
-		console.log("  .. skipping clock");
-		// Do not update clock
-		break;
-
-	    case "date":
-		// ignore date for now
-		console.log("  .. skipping date");
-		break;
-
 	    default:
 		var ele = document.getElementById(id);
 		if (ele) {
