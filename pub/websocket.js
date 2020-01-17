@@ -30,13 +30,12 @@ window.addEventListener("load", function(evt) {
 		break;
 
 	    default:
-		console.log("error handling element " + id);
 		var ele = document.getElementById(id);
 		if (ele) {
+		    console.log("  .. " + id + " == " + obj[id]);
 		    ele.innerHTML = obj[id];
 		}
 	    }
-
 	}
     }
     
