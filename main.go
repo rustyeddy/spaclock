@@ -47,7 +47,6 @@ func main() {
 
 	// Setup the router 
 	router := mux.NewRouter()
-
 	router.HandleFunc("/ws", handleUpgrade)
 	router.HandleFunc("/api/health", handleHealth)
 	router.HandleFunc("/api/message/{message}", handleMessage)
@@ -141,6 +140,9 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	// conn is a parameter to ensure the pointer does not change on
+	// us a new client connects. The following go routine exists
+	// when it recieves an error attempting to read from the connection. 
 	go func(conn *websocket.Conn) {
 		for {
 			var msg wsMessage
@@ -154,13 +156,14 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 		}
 	}(conn)
 
+	// Loop forever wating on the msgQ, when we recieve one (a string)
+	// we'll wrap it in the single field JSON string and send it to
+	// our client
 	for {
-		var err error
-
 		select {
 		case message := <-msgQ:
 			msg := &wsMessage{Message: message}
-			if err = conn.WriteJSON(&msg); err != nil {
+			if err := conn.WriteJSON(&msg); err != nil {
 				log.Errorf("Websocket Write failed %v", err)
 				return
 			}
