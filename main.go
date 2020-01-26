@@ -2,17 +2,95 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/tarm/serial"
 
 	log "github.com/sirupsen/logrus"
 )
 
+// ============================ types ===============================
+type Configuration struct {
+	Addr       string // Addr:port
+	Pubdir     string // The directory to publish
+	SerialPort string // Must be provided if desired
+}
+
+type wsMessage struct {
+	Message string `json:"message"`
+}
+
+// ============================ Globals ===============================
+
+// upgrader is used by the HTTP socket to establish a websocket
+// connection with the client
+var (
+	config   Configuration
+	upgrader *websocket.Upgrader
+	msgQ     chan string
+)
+
+// ============================ Init ===============================
+func init() {
+	msgQ = make(chan string)
+	upgrader = &websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin:     func(r *http.Request) bool { return true },
+	}
+
+	flag.StringVar(&config.Addr, "addr", "0.0.0.0:8000", "Address:port default is :8000")
+	flag.StringVar(&config.Pubdir, "pubdir", "./pub", "The directory to publish")
+	flag.StringVar(&config.SerialPort, "serial", "", "Default is no serial port")
+}
+
+// ============================ Main ===============================
+func main() {
+	flag.Parse()
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go doRouter(&wg)
+	if config.SerialPort != "" {
+		go doSerial(config.SerialPort, &wg)
+	}
+
+	wg.Wait()
+	log.Info("SPA Clock all done!")
+}
+
+// Start the router and register callbacks
+func doRouter(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	// Setup the router
+	router := mux.NewRouter()
+	router.HandleFunc("/ws", handleUpgrade)
+	router.HandleFunc("/api/health", handleHealth)
+	router.HandleFunc("/api/message/{message}", handleMessage)
+
+	spa := spaHandler{staticPath: config.Pubdir, indexPath: "index.html"}
+	router.PathPrefix("/").Handler(spa)
+
+	srv := &http.Server{
+		Handler: router,
+		Addr:    config.Addr,
+		// Good practice: enforce timeouts for servers you create!
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	srv.ListenAndServe()
+}
+
+// ============================================================================
 // spaHandler implements the http.Handler interface, so we can use it
 // to respond to HTTP requests. The path to the static directory and
 // path to the index file within that static directory are used to
@@ -22,21 +100,7 @@ type spaHandler struct {
 	indexPath  string
 }
 
-type wsMessage struct {
-	Message string `json:"message"`
-	Clock   string `json:"clock"`
-	Date    string `json:"date"`
-}
-
-// upgrader is used by the HTTP socket to establish a websocket
-// connection with the client
-var (
-	upgrader *websocket.Upgrader = &websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin:     func(r *http.Request) bool { return true },
-	}
-)
+// ============ Handle HTTP REST and static file Requests =====================
 
 // ServeHTTP inspects the URL path to locate a file within the static dir
 // on the SPA handler. If a file is found, it will be served. If not, the
@@ -72,6 +136,30 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.FileServer(http.Dir(h.staticPath)).ServeHTTP(w, r)
 }
 
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	// an example API handler
+	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
+func handleMessage(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		log.Warning("TODO GET")
+	case "PUT", "POST":
+		vars := mux.Vars(r)
+		message := vars["message"]
+		if message != "" {
+			msgQ <- message
+		} else {
+			log.Info("\tmessage not found")
+		}
+	default:
+		log.Warning("handleMessage DEFAULT")
+	}
+	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
+// ===================== Websocket =====================================
 func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -80,65 +168,59 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	// ... Use conn to send a recieve messages: this basically turns
-	// into an echo server.  We need to spawn this process off.  But
-	// for now we'll just decode it and away we go.
+	// conn is a parameter to ensure the pointer does not change on
+	// us a new client connects. The following go routine exists
+	// when it recieves an error attempting to read from the connection.
+	go func(conn *websocket.Conn) {
+		for {
+			var msg wsMessage
+			if err = conn.ReadJSON(&msg); err != nil {
+				log.Errorf("Failed reading message: %+v", err)
+				return
+			}
+			log.Infof("ws recieved message: %+v", msg)
+
+			// Do something with the message ...
+		}
+	}(conn)
+
+	// Loop forever wating on the msgQ, when we recieve one (a string)
+	// we'll wrap it in the single field JSON string and send it to
+	// our client
 	for {
+		select {
+		case message := <-msgQ:
+			msg := &wsMessage{Message: message}
+			if err := conn.WriteJSON(&msg); err != nil {
+				log.Errorf("Websocket Write failed %v", err)
+				return
+			}
+		}
+	}
+}
 
-		var err error
-		var msg wsMessage
-		if err = conn.ReadJSON(&msg); err != nil {
-			log.Errorf("ws ReadJSON failed %v", err)
+// ===================== SerialPort =====================================
+func doSerial(port string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	c := &serial.Config{Name: port, Baud: 9600}
+	s, err := serial.OpenPort(c)
+	if err != nil {
+		log.Errorln("open serial: ", err)
+		return
+	}
+
+	ridx := 0
+	//widx := 0
+
+	buf := make([]byte, 256)
+	for {
+		n, err := s.Read(buf)
+		if err != nil {
+			log.Error(err)
 			return
 		}
-		log.Infof("ws recieved message: %+v", msg)
 
-		msg = wsMessage{
-			Message: "Hello, there!",
-			Date:    "Today",
-		}
-
-		if err = conn.WriteJSON(msg); err != nil {
-			log.Errorf("Websocket Write failed %v", err)
-			return
-		}
+		log.Infof("incoming:\n%s", buf[ridx:n])
 	}
-}
-
-func main() {
-	router := mux.NewRouter()
-
-	router.HandleFunc("/ws", handleUpgrade)
-	router.HandleFunc("/api/health", handleHealth)
-	router.HandleFunc("/api/message", handleMessage)
-
-	spa := spaHandler{staticPath: "pub", indexPath: "index.html"}
-	router.PathPrefix("/").Handler(spa)
-
-	srv := &http.Server{
-		Handler: router,
-		Addr:    "0.0.0.0:8000",
-		// Good practice: enforce timeouts for servers you create!
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-	}
-
-	log.Fatal(srv.ListenAndServe())
-}
-
-func handleHealth(w http.ResponseWriter, r *http.Request) {
-	// an example API handler
-	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
-}
-
-func handleMessage(w http.ResponseWriter, r *http.Request) {
-
-	switch r.Method {
-	case "GET":
-
-	case "PUT", "POST":
-
-	default:
-	}
-	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 }

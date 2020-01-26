@@ -14,6 +14,8 @@ window.addEventListener("load", function(evt) {
         ws = null;
     }
     
+    // We assume the incoming message is a JSON string containing a single
+    // field 'message' with a string as a value.
     ws.onmessage = function(evt) {
 	var obj = JSON.parse(evt.data);
 	for (id in obj) {
@@ -25,13 +27,12 @@ window.addEventListener("load", function(evt) {
 		break;
 
 	    default:
-		console.log("error handling element " + id);
 		var ele = document.getElementById(id);
 		if (ele) {
+		    console.log("  .. " + id + " == " + obj[id]);
 		    ele.innerHTML = obj[id];
 		}
 	    }
-
 	}
     }
     
