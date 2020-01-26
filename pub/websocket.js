@@ -24,11 +24,6 @@ window.addEventListener("load", function(evt) {
 		// Do not update clock
 		break;
 
-	    case "date":
-		// ignore date for now
-		console.log("  .. skipping date");
-		break;
-
 	    default:
 		console.log("error handling element " + id);
 		var ele = document.getElementById(id);
