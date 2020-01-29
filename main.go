@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -143,8 +145,10 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 
 func handleMessage(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
+
 	case "GET":
-		log.Warning("TODO GET")
+		log.Warning("Todo GET")
+
 	case "PUT", "POST":
 		vars := mux.Vars(r)
 		message := vars["message"]
@@ -153,6 +157,7 @@ func handleMessage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Info("\tmessage not found")
 		}
+
 	default:
 		log.Warning("handleMessage DEFAULT")
 	}
@@ -210,17 +215,28 @@ func doSerial(port string, wg *sync.WaitGroup) {
 		return
 	}
 
-	ridx := 0
-	//widx := 0
-
-	buf := make([]byte, 256)
 	for {
-		n, err := s.Read(buf)
+		buf := make([]byte, 256)
+		_, err := s.Read(buf)
 		if err != nil {
-			log.Error(err)
-			return
+			log.Errorf("Read Error %v\n", err)
+			continue
 		}
-
-		log.Infof("incoming:\n%s", buf[ridx:n])
+		processBuffer(buf)
 	}
+}
+
+func processBuffer(buf []byte) {
+	var str string
+	for i := 0; i < len(buf); i++ {
+		if buf[i] == 0 || buf[i] == '\r' || buf[i] == '\n' {
+			j := i - 1
+			str = string(buf[0:j])
+			break
+		}
+	}
+
+	strs := strings.Split(str, "+")
+	v := strings.Split(strs[2], ":")
+	fmt.Printf("\t%+v\n", v[1])
 }
