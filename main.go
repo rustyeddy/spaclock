@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -30,6 +29,10 @@ type wsMessage struct {
 	Message string `json:"message"`
 }
 
+type tempMessage struct {
+	Tempf string `json:"tempf"`
+}
+
 // ============================ Globals ===============================
 
 // upgrader is used by the HTTP socket to establish a websocket
@@ -37,12 +40,15 @@ type wsMessage struct {
 var (
 	config   Configuration
 	upgrader *websocket.Upgrader
-	msgQ     chan string
+
+	msgQ  chan string
+	tempQ chan string
 )
 
 // ============================ Init ===============================
 func init() {
 	msgQ = make(chan string)
+	tempQ = make(chan string)
 	upgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -196,8 +202,16 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case message := <-msgQ:
+			log.Debugf("msgQ %q", message)
 			msg := &wsMessage{Message: message}
 			if err := conn.WriteJSON(&msg); err != nil {
+				log.Errorf("Websocket Write failed %v", err)
+				return
+			}
+		case temp := <-tempQ:
+			log.Debugf("tempQ %s", temp)
+			tmp := &tempMessage{Tempf: temp}
+			if err := conn.WriteJSON(&tmp); err != nil {
 				log.Errorf("Websocket Write failed %v", err)
 				return
 			}
@@ -229,7 +243,6 @@ func doSerial(port string, wg *sync.WaitGroup) {
 
 func processBuffer(buf []byte) {
 	var str string
-	var err error
 
 	for i := 0; i < len(buf); i++ {
 		if buf[i] == 0 || buf[i] == '\r' || buf[i] == '\n' {
@@ -239,12 +252,8 @@ func processBuffer(buf []byte) {
 		}
 	}
 
-	var f float64
 	strs := strings.Split(str, "+")
 	v := strings.Split(strs[2], ":")
-	if f, err = strconv.ParseFloat(v[1], 32); err != nil {
-		log.Errorf("failed to parse %v\n", err)
-		return
-	}
-	fmt.Println("Floater: ", f)
+	fmt.Printf("write floater to tempq: %s\n", v[1])
+	tempQ <- v[1]
 }
