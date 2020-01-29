@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -228,6 +229,8 @@ func doSerial(port string, wg *sync.WaitGroup) {
 
 func processBuffer(buf []byte) {
 	var str string
+	var err error
+
 	for i := 0; i < len(buf); i++ {
 		if buf[i] == 0 || buf[i] == '\r' || buf[i] == '\n' {
 			j := i - 1
@@ -236,7 +239,12 @@ func processBuffer(buf []byte) {
 		}
 	}
 
+	var f float64
 	strs := strings.Split(str, "+")
 	v := strings.Split(strs[2], ":")
-	fmt.Printf("\t%+v\n", v[1])
+	if f, err = strconv.ParseFloat(v[1], 32); err != nil {
+		log.Errorf("failed to parse %v\n", err)
+		return
+	}
+	fmt.Println("Floater: ", f)
 }
