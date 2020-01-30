@@ -1,5 +1,5 @@
 body {
-    background: #433235;
+    background: #1A2B2B;
     color: white;
 }
 
@@ -12,11 +12,17 @@ body {
 }
 
 #clock {
-    font-family: 'Comfortaa', cursive;
+    font-family: 'Sigmar One', cursive;
     font-size: 162px;
 }
 
+#tempf {
+    font-family: 'Bangers', cursive;
+    font-size: 96px;
+}
+
 #date {
+    font-family: 'Amatic SC';
     font-size: 68px;
 }
 

@@ -17,19 +17,18 @@ window.addEventListener("load", function(evt) {
     // We assume the incoming message is a JSON string containing a single
     // field 'message' with a string as a value.
     ws.onmessage = function(evt) {
+
 	var obj = JSON.parse(evt.data);
 	for (id in obj) {
-	    console.log(id + " - " + obj[id]);
-	    switch (id) {
-	    case "clock":
-		console.log("  .. skipping clock");
-		// Do not update clock
-		break;
+	    var ele = document.getElementById(id);
+	    if (!ele) {
+		console.log("Unknown element: " + id);
+		continue;
+	    }
 
+	    switch (id) {
 	    default:
-		var ele = document.getElementById(id);
 		if (ele) {
-		    console.log("  .. " + id + " == " + obj[id]);
 		    ele.innerHTML = obj[id];
 		}
 	    }

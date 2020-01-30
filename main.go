@@ -33,6 +33,14 @@ type tempMessage struct {
 	Tempf string `json:"tempf"`
 }
 
+type dateMessage struct {
+	time.Time `json:"date"`
+}
+
+type clockMessage struct {
+	time.Time `json:"clock"`
+}
+
 // ============================ Globals ===============================
 
 // upgrader is used by the HTTP socket to establish a websocket
@@ -43,19 +51,24 @@ var (
 
 	msgQ  chan string
 	tempQ chan string
+	timeQ chan time.Time
+	dateQ chan time.Time
 )
 
 // ============================ Init ===============================
 func init() {
 	msgQ = make(chan string)
 	tempQ = make(chan string)
+	timeQ = make(chan time.Time)
+	dateQ = make(chan time.Time)
+
 	upgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin:     func(r *http.Request) bool { return true },
 	}
 
-	flag.StringVar(&config.Addr, "addr", "0.0.0.0:8000", "Address:port default is :8000")
+	flag.StringVar(&config.Addr, "addr", "0.0.0.0:2222", "Address:port default is :8000")
 	flag.StringVar(&config.Pubdir, "pubdir", "./pub", "The directory to publish")
 	flag.StringVar(&config.SerialPort, "serial", "", "Default is no serial port")
 }
@@ -65,8 +78,15 @@ func main() {
 	flag.Parse()
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
+
+	// REST & Static HTML, etc.
 	go doRouter(&wg)
+
+	// Start the periodic ticker
+	go doTicker(&wg)
+
+	// Serial Port if enabled
 	if config.SerialPort != "" {
 		go doSerial(config.SerialPort, &wg)
 	}
@@ -215,6 +235,37 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 				log.Errorf("Websocket Write failed %v", err)
 				return
 			}
+
+		case date := <-dateQ:
+			log.Debugf("dateQ %s", date)
+			d := &dateMessage{Time: date}
+			if err := conn.WriteJSON(&d); err != nil {
+				log.Errorf("Websocket Write failed %v", err)
+				return
+			}
+
+		case clock := <-timeQ:
+			log.Debugf("timeQ %s", clock)
+			c := &clockMessage{Time: clock}
+			if err := conn.WriteJSON(&c); err != nil {
+				log.Errorf("Websocket Write failed %v", err)
+				return
+			}
+
+		}
+	}
+}
+
+// ==================== handleTicker -===================================
+func doTicker(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	ticker := time.NewTicker(5 * time.Second)
+	for {
+		select {
+		case t := <-ticker.C:
+			log.Debugln("ticker went off")
+			dateQ <- t
 		}
 	}
 }
