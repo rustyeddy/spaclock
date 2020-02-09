@@ -2,8 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"strings"
 	"sync"
 	"time"
 	log "github.com/sirupsen/logrus"
@@ -14,24 +12,10 @@ type Configuration struct {
 	Addr       string // Addr:port
 	Pubdir     string // The directory to publish
 	SerialPort string // Must be provided if desired
-	MQTTServer string
-	MQTTTopic	string
-}
 
-type wsMessage struct {
-	Message string `json:"message"`
-}
-
-type tempMessage struct {
-	Tempf string `json:"tempf"`
-}
-
-type dateMessage struct {
-	time.Time `json:"date"`
-}
-
-type clockMessage struct {
-	time.Time `json:"clock"`
+	// MQTT Broker and topic(s)
+	Broker string 
+	Topic string
 }
 
 // ============================ Globals ===============================
@@ -56,6 +40,8 @@ func init() {
 	flag.StringVar(&config.Addr, "addr", "0.0.0.0:2222", "Address:port default is :8000")
 	flag.StringVar(&config.Pubdir, "pubdir", "./pub", "The directory to publish")
 	flag.StringVar(&config.SerialPort, "serial", "", "Default is no serial port")
+	flag.StringVar(&config.Broker, "broker", "tcp://10.24.10.10:1883", "Broker addr:port")
+	flag.StringVar(&config.Topic, "topic", "/topic/tempf", "topic to subscribe to")
 }
 
 // ============================ Main ===============================
@@ -65,29 +51,12 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(4)
 
-	go routes(&wg)
-	go timers(&wg)
-	go serial_loop(config.SerialPort, &wg)
-	go mqtt_loop(config.MQTTServer, config.MQTTTopic, &wg)
+	go routes(&wg) // handle http
+	go timers(&wg) // timed events
+	go serial_loop(config.SerialPort, &wg) // serial port 
+	go mqtt_loop(config.Broker, config.Topic, &wg) // MQTT
 
-	wg.Wait()
+	wg.Wait() // wait for everything to return or die
 	log.Info("SPA Clock all done!")
 }
 
-
-func processBuffer(buf []byte) {
-	var str string
-
-	for i := 0; i < len(buf); i++ {
-		if buf[i] == 0 || buf[i] == '\r' || buf[i] == '\n' {
-			j := i - 1
-			str = string(buf[0:j])
-			break
-		}
-	}
-
-	strs := strings.Split(str, "+")
-	v := strings.Split(strs[2], ":")
-	fmt.Printf("write floater to tempq: %s\n", v[1])
-	tempQ <- v[1]
-}

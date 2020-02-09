@@ -10,6 +10,11 @@ var (
 	upgrader *websocket.Upgrader
 )
 
+type wsMessage struct {
+	Key string `json:"key"`
+	Val string `json:"val"`
+}
+
 func init() {
 	upgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -50,14 +55,14 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 		select {
 		case message := <-msgQ:
 			log.Debugf("msgQ %q", message)
-			msg := &wsMessage{Message: message}
+			msg := &wsMessage{Key: "message", Val: message}
 			if err := conn.WriteJSON(&msg); err != nil {
 				log.Errorf("Websocket Write failed %v", err)
 				return
 			}
 		case temp := <-tempQ:
 			log.Debugf("tempQ %s", temp)
-			tmp := &tempMessage{Tempf: temp}
+			tmp := &wsMessage{Key: "tempf", Val: temp}
 			if err := conn.WriteJSON(&tmp); err != nil {
 				log.Errorf("Websocket Write failed %v", err)
 				return
@@ -65,7 +70,12 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 
 		case date := <-dateQ:
 			log.Debugf("dateQ %s", date)
-			d := &dateMessage{Time: date}
+			dstr := date.Format("January 2, 2006")
+			if err != nil {
+				log.Errorf("failed to parse time, continue %v", err)
+				return
+			}
+			d := &wsMessage{Key: "date", Val: string(dstr)}
 			if err := conn.WriteJSON(&d); err != nil {
 				log.Errorf("Websocket Write failed %v", err)
 				return
@@ -73,12 +83,17 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 
 		case clock := <-timeQ:
 			log.Debugf("timeQ %s", clock)
-			c := &clockMessage{Time: clock}
+			dstr := clock.Format("January 2, 2006")
+			if err != nil {
+				log.Errorf("failed to parse time, continue %v", err)
+				return
+			}
+
+			c := &wsMessage{Key: "time", Val: dstr}
 			if err := conn.WriteJSON(&c); err != nil {
 				log.Errorf("Websocket Write failed %v", err)
 				return
 			}
-
 		}
 	}
 }

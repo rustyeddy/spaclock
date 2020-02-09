@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/tarm/serial"
 	"sync"
+	"strings"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -33,3 +35,20 @@ func serial_loop(port string, wg *sync.WaitGroup) {
 	}
 }
 
+
+func processBuffer(buf []byte) {
+	var str string
+
+	for i := 0; i < len(buf); i++ {
+		if buf[i] == 0 || buf[i] == '\r' || buf[i] == '\n' {
+			j := i - 1
+			str = string(buf[0:j])
+			break
+		}
+	}
+
+	strs := strings.Split(str, "+")
+	v := strings.Split(strs[2], ":")
+	fmt.Printf("write floater to tempq: %s\n", v[1])
+	tempQ <- v[1]
+}
