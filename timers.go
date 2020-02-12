@@ -3,6 +3,7 @@ package main
 import (
 	"sync"
 	"time"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,4 +20,3 @@ func timers(wg *sync.WaitGroup) {
 		}
 	}
 }
-

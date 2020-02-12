@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/tarm/serial"
-	"sync"
 	"strings"
-	log "github.com/sirupsen/logrus"
-)
+	"sync"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/tarm/serial"
+)
 
 func serial_loop(port string, wg *sync.WaitGroup) {
 	defer wg.Done()
@@ -34,7 +34,6 @@ func serial_loop(port string, wg *sync.WaitGroup) {
 		processBuffer(buf)
 	}
 }
-
 
 func processBuffer(buf []byte) {
 	var str string

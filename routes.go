@@ -1,16 +1,16 @@
 package main
 
 import (
-	"net/http"	
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"sync"
-	"time"
+	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
+
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
-
 
 // ============================================================================
 // spaHandler implements the http.Handler interface, so we can use it
@@ -81,7 +81,6 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// otherwise, use http.FileServer to serve the static dir
 	http.FileServer(http.Dir(h.staticPath)).ServeHTTP(w, r)
 }
-
 
 func handleMessage(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
