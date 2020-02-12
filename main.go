@@ -44,7 +44,6 @@ func init() {
 	flag.StringVar(&config.Pubdir, "pubdir", "./pub", "The directory to publish")
 	flag.StringVar(&config.SerialPort, "serial", "", "Default is no serial port")
 	flag.StringVar(&config.Broker, "broker", "tcp://10.24.10.10:1883/topic/tempf", "Broker addr:port")
-	flag.StringVar(&config.Topic, "topic", "/topic/tempf", "topic to subscribe to")
 }
 
 // ============================ Main ===============================

@@ -15,8 +15,6 @@ func connect(clid string, uri *url.URL) mqtt.Client {
 	opts := createClientOptions(clid, uri)
 	cli := mqtt.NewClient(opts)
 
-	fmt.Printf("client %+v\n", cli)
-
 	token := cli.Connect()
 	for !token.WaitTimeout(3 * time.Second) {
 	}
@@ -29,9 +27,9 @@ func connect(clid string, uri *url.URL) mqtt.Client {
 
 func createClientOptions(clid string, uri *url.URL) *mqtt.ClientOptions {
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker("tcp://10.24.10.10:1883")
+	opts.AddBroker(config.Broker)
 
-	//opts.AddBroker(fmt.Sprintf("tcp://%s", uri.Host))
+	// opts.AddBroker(fmt.Sprintf("tcp://%s", uri.Host))
 	// opts.SetUsername(url.User.Username())
 	// opts.SetPassword(password)
 	opts.SetClientID(clid)
@@ -40,7 +38,7 @@ func createClientOptions(clid string, uri *url.URL) *mqtt.ClientOptions {
 
 func listen(uri *url.URL, topic string) {
 	cli := connect("sub", uri)
-	cli.Subscribe("/topic/tempf", 0, func(client mqtt.Client, msg mqtt.Message) {
+	cli.Subscribe(topic, 0, func(client mqtt.Client, msg mqtt.Message) {
 		fmt.Printf("* [%s] %s\n", msg.Topic(), string(msg.Payload()))
 	})
 }
@@ -53,14 +51,15 @@ func mqtt_loop(broker string, wg *sync.WaitGroup) {
 		log.Fatal(err)
 	}
 
-	topic := uri.Path[1:len(uri.Path)]
+	//topic := uri.Path[1:len(uri.Path)]
+	topic := uri.Path
 	if topic == "" {
 		topic = "test"
 	}
 
 	go listen(uri, topic)
 
-	u, err := uri.Parse("tcp://10.24.10.10:1883")
+	u, err := uri.Parse(config.Broker)
 	if err != nil {
 		log.Fatal(err)
 	}
