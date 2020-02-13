@@ -36,10 +36,16 @@ func createClientOptions(clid string, uri *url.URL) *mqtt.ClientOptions {
 	return opts
 }
 
-func listen(uri *url.URL, topic string) {
+func mqttReader(uri *url.URL, topic string) {
 	cli := connect("sub", uri)
 	cli.Subscribe(topic, 0, func(client mqtt.Client, msg mqtt.Message) {
-		fmt.Printf("* [%s] %s\n", msg.Topic(), string(msg.Payload()))
+		tempstr := string(msg.Payload())
+		fmt.Printf("* [%s] %s\n", msg.Topic(), tempstr)
+
+		// send the weather to a websocket if we have one
+		tlv := NewTLV(tlvTypeTempf, len(tempstr)+2, tempstr)
+		fmt.Println("got our tlv")
+		webQ <- tlv
 	})
 }
 
@@ -57,7 +63,7 @@ func mqtt_loop(broker string, wg *sync.WaitGroup) {
 		topic = "test"
 	}
 
-	go listen(uri, topic)
+	go mqttReader(uri, topic)
 
 	u, err := uri.Parse(config.Broker)
 	if err != nil {

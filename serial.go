@@ -48,6 +48,8 @@ func processBuffer(buf []byte) {
 
 	strs := strings.Split(str, "+")
 	v := strings.Split(strs[2], ":")
-	fmt.Printf("write floater to tempq: %s\n", v[1])
-	tempQ <- v[1]
+	bstr := v[1]
+
+	fmt.Printf("write floater to tempq: %s\n", bstr)
+	webQ <- NewTLV(tlvTypeTempf, len(bstr), bstr)
 }

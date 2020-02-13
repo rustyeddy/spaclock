@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"sync"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -26,24 +25,20 @@ type Configuration struct {
 // connection with the client
 var (
 	config Configuration
-	msgQ   chan string
-	tempQ  chan string
-	timeQ  chan time.Time
-	dateQ  chan time.Time
+	webQ   chan TLV
 )
 
 // ============================ Init ===============================
 func init() {
-	msgQ = make(chan string)
-	tempQ = make(chan string)
-	timeQ = make(chan time.Time)
-	dateQ = make(chan time.Time)
+
+	webQ = make(chan TLV)
 
 	flag.StringVar(&config.Addr, "addr", "0.0.0.0:2222", "Address:port default is :8000")
 	flag.BoolVar(&config.Debug, "debug", false, "Turn on debugging")
 	flag.StringVar(&config.Pubdir, "pubdir", "./pub", "The directory to publish")
 	flag.StringVar(&config.SerialPort, "serial", "", "Default is no serial port")
 	flag.StringVar(&config.Broker, "broker", "tcp://10.24.10.10:1883/topic/tempf", "Broker addr:port")
+
 }
 
 // ============================ Main ===============================

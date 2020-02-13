@@ -83,6 +83,7 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleMessage(w http.ResponseWriter, r *http.Request) {
+	ok := true
 	switch r.Method {
 
 	case "GET":
@@ -91,19 +92,17 @@ func handleMessage(w http.ResponseWriter, r *http.Request) {
 	case "PUT", "POST":
 		vars := mux.Vars(r)
 		message := vars["message"]
-		if message != "" {
-			msgQ <- message
-		} else {
-			log.Info("\tmessage not found")
-		}
 
+		webQ <- NewTLV(tlvTypeMessage, len(message), message)
 	default:
-		log.Warning("handleMessage DEFAULT")
+		log.Warning("handleMessage r.Method is not handled", r.Method)
+		ok = false
 	}
-	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+	json.NewEncoder(w).Encode(map[string]bool{"ok": ok})
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
-	// an example API handler
+
+	// TODO: run a check on http, rest, mqtt and websocket
 	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 }

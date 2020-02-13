@@ -18,7 +18,15 @@ window.addEventListener("load", function(evt) {
     // field 'message' with a string as a value.
     ws.onmessage = function(evt) {
 
-	var obj = JSON.parse(evt.data);
+	//var obj = JSON.parse(evt.data);
+	var data = evt.data;
+	for (int i = 0; i < evt.data.length ) {
+	    var t = data[0];
+	    var l = data[1];
+	    var val = data[2:];
+	}
+
+	/*
 	for (id in obj) {
 	    var ele = document.getElementById(id);
 	    if (!ele) {
@@ -33,6 +41,7 @@ window.addEventListener("load", function(evt) {
 		}
 	    }
 	}
+	*/
     }
     
     ws.onerror = function(evt) {
