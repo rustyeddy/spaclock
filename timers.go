@@ -16,8 +16,8 @@ func timers(wg *sync.WaitGroup) {
 		select {
 		case t := <-ticker.C:
 			log.Debugln("ticker went off")
-			tstr := t.String()
-			msg := NewMessage("time", tstr)
+			tstr := t.Format("Mon Jan 2")
+			msg := NewMessage("date", tstr)
 			webQ <- *msg
 		}
 	}
