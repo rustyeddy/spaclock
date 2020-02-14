@@ -93,7 +93,7 @@ func handleMessage(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		message := vars["message"]
 
-		webQ <- NewTLV(tlvTypeMessage, len(message), message)
+		webQ <- *NewMessage("message", message)
 	default:
 		log.Warning("handleMessage r.Method is not handled", r.Method)
 		ok = false

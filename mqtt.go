@@ -38,14 +38,14 @@ func createClientOptions(clid string, uri *url.URL) *mqtt.ClientOptions {
 
 func mqttReader(uri *url.URL, topic string) {
 	cli := connect("sub", uri)
+
 	cli.Subscribe(topic, 0, func(client mqtt.Client, msg mqtt.Message) {
 		tempstr := string(msg.Payload())
 		fmt.Printf("* [%s] %s\n", msg.Topic(), tempstr)
 
 		// send the weather to a websocket if we have one
-		tlv := NewTLV(tlvTypeTempf, len(tempstr)+2, tempstr)
-		fmt.Println("got our tlv")
-		webQ <- tlv
+		m := NewMessage("tempf", tempstr)
+		webQ <- *m
 	})
 }
 

@@ -57,7 +57,7 @@ func wsReader(conn *websocket.Conn) {
 
 // wsWriter spins forever waiting on messages (TLVs) containing messages
 // that need to be sent to the web socket client
-func wsWriter(conn *websocket.Conn, readQ chan TLV) {
+func wsWriter(conn *websocket.Conn, readQ chan Message) {
 
 	// Loop forever wating on the msgQ, when we recieve one (a string)
 	// we'll wrap it in the single field JSON string and send it to
@@ -66,13 +66,20 @@ func wsWriter(conn *websocket.Conn, readQ chan TLV) {
 		var unknown int
 		select {
 
-		case tlv := <-webQ:
+		case msg := <-webQ:
+			var buf []byte
 
-			log.Debugf("WS SEND: %d, len: %d, value: %s\n", tlv.Type(), tlv.Len(), tlv.Value())
-			if err := conn.WriteMessage(websocket.BinaryMessage, tlv.Buffer); err != nil {
+			log.Debugf("WS Send JSON %+v", msg)
+			if buf = msg.Marshal(); buf == nil {
+				log.Errorln("msg.Marshal failed to JSONify the message")
+				continue
+			}
+
+			if err := conn.WriteMessage(websocket.TextMessage, buf); err != nil {
 				log.Errorf("TLV write message failed %v", err)
 				continue
 			}
+			log.Debugln("sent message...")
 
 		default:
 			unknown++

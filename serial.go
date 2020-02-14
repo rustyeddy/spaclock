@@ -51,5 +51,5 @@ func processBuffer(buf []byte) {
 	bstr := v[1]
 
 	fmt.Printf("write floater to tempq: %s\n", bstr)
-	webQ <- NewTLV(tlvTypeTempf, len(bstr), bstr)
+	webQ <- *NewMessage("tempf", bstr)
 }

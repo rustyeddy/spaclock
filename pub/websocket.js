@@ -1,5 +1,6 @@
 window.addEventListener("load", function(evt) {
     var ws = new WebSocket("ws://" + document.location.host + "/ws");
+    //ws.binaryType = 'arraybuffer';
 
     ws.onopen = function(evt) {
         console.log("OPEN");
@@ -17,31 +18,26 @@ window.addEventListener("load", function(evt) {
     // We assume the incoming message is a JSON string containing a single
     // field 'message' with a string as a value.
     ws.onmessage = function(evt) {
-
-	//var obj = JSON.parse(evt.data);
-	var data = evt.data;
-	for (int i = 0; i < evt.data.length ) {
-	    var t = data[0];
-	    var l = data[1];
-	    var val = data[2:];
+	var obj = JSON.parse(evt.data);
+	if (obj == null) {
+	    console.log("WS bummer to message");
+	    return;
 	}
 
-	/*
+	console.log(obj);
 	for (id in obj) {
-	    var ele = document.getElementById(id);
+	    var o = obj[id];
+	    var key = o['k'];
+	    var val = o['v'];
+
+	    var ele = document.getElementById(key);
 	    if (!ele) {
 		console.log("Unknown element: " + id);
 		continue;
 	    }
 
-	    switch (id) {
-	    default:
-		if (ele) {
-		    ele.innerHTML = obj[id];
-		}
-	    }
+	    ele.innerHTML = val;
 	}
-	*/
     }
     
     ws.onerror = function(evt) {

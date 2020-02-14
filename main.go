@@ -25,13 +25,13 @@ type Configuration struct {
 // connection with the client
 var (
 	config Configuration
-	webQ   chan TLV
+	webQ   chan Message
 )
 
 // ============================ Init ===============================
 func init() {
 
-	webQ = make(chan TLV)
+	webQ = make(chan Message)
 
 	flag.StringVar(&config.Addr, "addr", "0.0.0.0:2222", "Address:port default is :8000")
 	flag.BoolVar(&config.Debug, "debug", false, "Turn on debugging")

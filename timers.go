@@ -17,8 +17,8 @@ func timers(wg *sync.WaitGroup) {
 		case t := <-ticker.C:
 			log.Debugln("ticker went off")
 			tstr := t.String()
-			tlv := NewTLV(tlvTypeTime, len(tstr), tstr)
-			webQ <- tlv
+			msg := NewMessage("time", tstr)
+			webQ <- *msg
 		}
 	}
 }
