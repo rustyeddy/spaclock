@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -43,15 +44,20 @@ func handleUpgrade(w http.ResponseWriter, r *http.Request) {
 func wsReader(conn *websocket.Conn) {
 	for {
 		var n int
-		var tlv TLV
+		var msg Message = Message{}
+		var buf []byte
 		var err error
 
-		if n, tlv.Buffer, err = conn.ReadMessage(); n < 3 || err != nil {
+		if n, buf, err = conn.ReadMessage(); err != nil {
 			log.Errorf("Error reading TLV from websocket len %d, err %v", n, err)
 			continue
 		}
-
-		log.Debugf("TLV type %v, len %v and value %v\n", tlv.Type(), tlv.Len(), tlv.Value())
+		err = json.Unmarshal(buf, &msg)
+		if err != nil {
+			log.Errorf("Error unmarshalling json %v", err)
+			return
+		}
+		log.Debugf("Read JSON %+v\n", msg)
 	}
 }
 
