@@ -49,8 +49,8 @@ func wsReader(conn *websocket.Conn) {
 		var err error
 
 		if n, buf, err = conn.ReadMessage(); err != nil {
-			log.Errorf("Error reading TLV from websocket len %d, err %v", n, err)
-			continue
+			log.Errorf("Error reading websocket len %d, err %v", n, err)
+			return
 		}
 		err = json.Unmarshal(buf, &msg)
 		if err != nil {
@@ -82,8 +82,8 @@ func wsWriter(conn *websocket.Conn, readQ chan Message) {
 			}
 
 			if err := conn.WriteMessage(websocket.TextMessage, buf); err != nil {
-				log.Errorf("TLV write message failed %v", err)
-				continue
+				log.Errorf("WS write message failed %v", err)
+				return
 			}
 			log.Debugln("sent message...")
 
